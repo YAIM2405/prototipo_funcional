@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SGIA - Simulador Operacional (Vanilla JS)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .module-card { border: 2px solid rgba(0,0,0,0.06); }
+    .glass { backdrop-filter: blur(6px); background-color: rgba(255,255,255,0.6); }
+    pre { white-space: pre-wrap; word-break: break-word; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-800">
+  <header class="bg-sky-700 text-white py-4 shadow">
+    <div class="max-w-6xl mx-auto px-4 flex items-center justify-between">
+      <h1 class="text-xl font-semibold">SGIA — Simulador Operacional</h1>
+      <div class="text-sm opacity-90">Prototipo funcional: Registro, Pasajeros, Equipaje, Personal y Monitoreo</div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-12 gap-6">
+
+    <!-- Left column -->
+    <section class="col-span-12 lg:col-span-8 space-y-6">
+
+      <!-- Flights -->
+      <div class="p-4 bg-white rounded shadow module-card">
+        <h2 class="text-lg font-semibold">Registro de Vuelos</h2>
+        <p class="text-sm text-gray-600">Registra vuelos que alimentarán a los demás módulos.</p>
+        <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-3 border rounded">
+            <form id="flight-form" class="space-y-2">
+              <div class="grid grid-cols-2 gap-2">
+                <input id="flight-id" placeholder="Código vuelo (ej: FL-101)" class="p-2 border rounded" required />
+                <input id="flight-airline" placeholder="Aerolínea" class="p-2 border rounded" required />
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <input id="flight-origin" placeholder="Origen" class="p-2 border rounded" value="BOG" />
+                <input id="flight-dest" placeholder="Destino" class="p-2 border rounded" required />
+                <input id="flight-time" type="datetime-local" class="p-2 border rounded" required />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <input id="flight-seats" type="number" class="p-2 border rounded" value="100" />
+                <input id="flight-gate" placeholder="Puerta" class="p-2 border rounded" value="A1" />
+              </div>
+              <div class="flex justify-end">
+                <button type="submit" class="px-4 py-2 bg-sky-600 text-white rounded">Registrar vuelo</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="p-3 border rounded">
+            <h3 class="font-medium">Vuelos registrados</h3>
+            <ul id="flights-list" class="mt-2 space-y-2 text-sm"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Passengers -->
+      <div class="p-4 bg-white rounded shadow module-card">
+        <h2 class="text-lg font-semibold">Validación de Pasajeros</h2>
+        <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-3 border rounded">
+            <form id="passenger-form" class="space-y-2">
+              <input id="pax-name" placeholder="Nombre del pasajero" class="p-2 border rounded w-full" required />
+              <div class="grid grid-cols-2 gap-2">
+                <select id="pax-flight" class="p-2 border rounded"></select>
+                <input id="pax-seat" placeholder="Asiento (opcional)" class="p-2 border rounded" />
+              </div>
+              <div class="flex justify-end">
+                <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded">Agregar pasajero</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="p-3 border rounded">
+            <h3 class="font-medium">Lista de pasajeros</h3>
+            <ul id="passengers-list" class="mt-2 space-y-2 text-sm"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Baggage -->
+      <div class="p-4 bg-white rounded shadow module-card">
+        <h2 class="text-lg font-semibold">Gestión del Equipaje</h2>
+        <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-3 border rounded">
+            <form id="baggage-form" class="space-y-2">
+              <select id="baggage-owner" class="p-2 border rounded w-full"></select>
+              <div class="flex gap-2">
+                <input id="baggage-weight" type="number" value="15" class="p-2 border rounded flex-1" />
+                <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded">Registrar maleta</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="p-3 border rounded">
+            <h3 class="font-medium">Registro de maletas</h3>
+            <ul id="baggage-list" class="mt-2 space-y-2 text-sm"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Staff -->
+      <div class="p-4 bg-white rounded shadow module-card">
+        <h2 class="text-lg font-semibold">Gestión del Personal</h2>
+        <div class="mt-3">
+          <div class="flex gap-2">
+            <input id="staff-name" placeholder="Nombre" class="p-2 border rounded flex-1" />
+            <input id="staff-role" placeholder="Rol" class="p-2 border rounded w-32" value="Técnico" />
+            <input id="staff-shift" placeholder="Turno" class="p-2 border rounded w-40" value="08:00-14:00" />
+            <button id="staff-add" class="px-3 py-2 bg-indigo-600 text-white rounded">Añadir</button>
+          </div>
+          <ul id="staff-list" class="mt-3 space-y-2"></ul>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Right column -->
+    <aside class="col-span-12 lg:col-span-4 space-y-4">
+      <div class="p-4 bg-white rounded shadow module-card">
+        <div id="monitor"></div>
+        <div class="mt-3 flex gap-2">
+          <button id="clear-alerts" class="flex-1 px-3 py-2 border rounded">Limpiar alertas</button>
+          <button id="export-db" class="px-3 py-2 bg-sky-600 text-white rounded">Exportar DB</button>
+        </div>
+        <div class="mt-2">
+          <label class="text-xs text-gray-600">Importar DB (json)</label>
+          <input id="import-db" type="file" accept="application/json" class="w-full text-sm mt-1" />
+        </div>
+      </div>
+
+      <div class="p-4 bg-white rounded shadow module-card">
+        <h3 class="font-medium">Registro de actividad</h3>
+        <ul id="activity-log" class="mt-2 text-xs max-h-48 overflow-auto"></ul>
+      </div>
+
+      <div class="p-4 bg-white rounded shadow module-card text-sm">
+        <h3 class="font-medium">Notas</h3>
+        <ul class="list-disc ml-5 mt-2">
+          <li>La aplicación simula la base de datos usando <strong>localStorage</strong>. Los datos persisten en el navegador.</li>
+          <li>Las interconexiones entre módulos se simulan con actualizaciones de estado y alertas.</li>
+          <li>Puedes exportar / importar la DB para compartir o guardar proyectos.</li>
+        </ul>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <footer class="text-center py-6 text-sm text-gray-600">SGIA Simulator — Prototipo educativo · Datos locales (no comparte con servidores)</footer>
+
+  <script>
+  // Vanilla JS implementation to avoid JSX/Babel issues
+  (function(){
+    // DB helpers
+    const KEY = 'sgia_sim_db_v1';
+    function loadDB(){
+      try{ const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; } catch(e){ console.error(e); return null; }
+    }
+    function saveDB(data){ localStorage.setItem(KEY, JSON.stringify(data)); }
+
+    function sampleData(){
+      return {
+        flights: [{ id: 'FL-100', airline: 'AeroCol', origin: 'BOG', dest: 'MDE', time: '2025-11-26T08:30', seats: 120, gate: 'A2' }],
+        passengers: [{ id: 'PAX-1', name: 'Ana Pérez', flightId: 'FL-100', seat: '12A', checkedIn: false }],
+        baggage: [],
+        staff: [{ id: 'ST-1', name: 'Juan R.', role: 'Check-In', shift: '08:00-14:00' }],
+        alerts: []
+      };
+    }
+
+    let state = loadDB() || sampleData();
+    saveDB(state);
+
+    // Utilities
+    function uid(prefix){ return prefix + '-' + Math.random().toString(36).slice(2,9).toUpperCase(); }
+    function el(id){ return document.getElementById(id); }
+
+    // Renderers
+    function renderFlights(){
+      const ul = el('flights-list'); ul.innerHTML='';
+      const select = el('pax-flight'); select.innerHTML='';
+      state.flights.forEach(f=>{
+        const li = document.createElement('li'); li.className='p-2 border rounded flex justify-between items-center';
+        li.innerHTML = `<div><div class=\"font-semibold\">${f.id} — ${f.airline}</div><div class=\"text-xs text-gray-600\">${f.origin} → ${f.dest} • Puerta ${f.gate} • ${new Date(f.time).toLocaleString()}</div></div><div class=\"text-sm text-gray-500\">Asientos: ${f.seats}</div>`;
+        ul.appendChild(li);
+        const opt = document.createElement('option'); opt.value = f.id; opt.textContent = `${f.id} — ${f.airline} → ${f.dest}`; select.appendChild(opt);
+      });
+    }
+
+    function renderPassengers(){
+      const ul = el('passengers-list'); ul.innerHTML='';
+      const ownerSel = el('baggage-owner'); ownerSel.innerHTML='';
+      state.passengers.forEach(p=>{
+        const li = document.createElement('li'); li.className='p-2 border rounded flex justify-between items-center';
+        const checkedClass = p.checkedIn ? 'bg-green-600 text-white px-2 py-1 rounded' : 'bg-gray-200 px-2 py-1 rounded';
+        li.innerHTML = `<div><div class=\"font-semibold\">${p.name}</div><div class=\"text-xs text-gray-600\">${p.id} • Vuelo: ${p.flightId} • ${p.seat || 'Sin asiento'}</div></div><div class=\"flex items-center gap-2\"><button data-id=\"${p.id}\" class=\"check-btn ${checkedClass}\">${p.checkedIn? 'Checked' : 'Check-in'}</button></div>`;
+        ul.appendChild(li);
+        const opt = document.createElement('option'); opt.value = p.id; opt.textContent = `${p.name} — ${p.id} — ${p.flightId}`; ownerSel.appendChild(opt);
+      });
+      // attach listeners for check buttons
+      document.querySelectorAll('.check-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const id = btn.getAttribute('data-id'); toggleCheckIn(id);
+        });
+      });
+    }
+
+    function renderBaggage(){
+      const ul = el('baggage-list'); ul.innerHTML='';
+      state.baggage.forEach(b=>{
+        const li = document.createElement('li'); li.className='p-2 border rounded flex justify-between';
+        li.innerHTML = `<div><div class=\"font-semibold\">${b.id}</div><div class=\"text-xs text-gray-600\">Pasajero: ${b.passengerId} • Vuelo: ${b.flightId}</div></div><div class=\"text-sm\">${b.status}</div>`;
+        ul.appendChild(li);
+      });
+    }
+
+    function renderStaff(){
+      const ul = el('staff-list'); ul.innerHTML='';
+      state.staff.forEach(s=>{
+        const li = document.createElement('li'); li.className='p-2 border rounded flex items-center justify-between';
+        li.innerHTML = `<div><div class=\"text-sm font-medium\">${s.name} <span class=\"text-xs text-gray-500\">(${s.role})</span></div><div class=\"text-xs text-gray-600\">${s.id}</div></div><div class=\"flex items-center gap-2\"><input value=\"${s.shift}\" data-id=\"${s.id}\" class=\"p-1 border rounded w-40 text-sm shift-input\" /></div>`;
+        ul.appendChild(li);
+      });
+      document.querySelectorAll('.shift-input').forEach(inp=>{
+        inp.addEventListener('change', (e)=>{
+          const id = e.target.getAttribute('data-id'); const newShift = e.target.value;
+          updateStaff(state.staff.map(st=> st.id===id ? {...st, shift:newShift} : st));
+        });
+      });
+    }
+
+    function renderMonitor(){
+      const container = el('monitor'); container.innerHTML='';
+      const upcoming = state.flights.filter(f => new Date(f.time) > new Date()).length;
+      const baggageIn = state.baggage.filter(b => b.status === 'Checked-In').length;
+      const checkedInPassengers = state.passengers.filter(p => p.checkedIn).length;
+      const html = `
+        <div class=\"p-3 border rounded module-card glass\"><div class=\"flex items-center justify-between\"><div><div class=\"text-xs text-gray-600\">Vuelos próximos</div><div class=\"text-2xl font-semibold\">${upcoming}</div></div><div class=\"text-right\"><div class=\"text-xs text-gray-600\">Maletas registradas</div><div class=\"text-2xl font-semibold\">${baggageIn}</div></div><div class=\"text-right\"><div class=\"text-xs text-gray-600\">Pasajeros check-in</div><div class=\"text-2xl font-semibold\">${checkedInPassengers}</div></div></div></div>`;
+      container.innerHTML = html + `<div class=\"p-3 border rounded module-card mt-3\"><h3 class=\"font-semibold mb-2\">Alertas activas</h3>${state.alerts.length===0? '<div class=\"text-sm text-gray-600\">Sin alertas</div>' : '<ul class=\"space-y-1 text-sm\">'+ state.alerts.map(a=>`<li class=\\"text-red-600\\">• ${a}</li>`).join('') + '</ul>'}</div><div class=\"p-3 border rounded module-card mt-3\"><h3 class=\"font-semibold mb-2\">Base de datos central (JSON)</h3><pre class=\"text-xs max-h-40 overflow-auto bg-gray-100 p-2 rounded\">'+ JSON.stringify(state, null, 2) +'</pre></div>`;
+    }
+
+    function renderActivity(){
+      const ul = el('activity-log'); ul.innerHTML='';
+      [...state.alerts].reverse().forEach(a=>{
+        const li = document.createElement('li'); li.className='py-1 border-b'; li.textContent = a; ul.appendChild(li);
+      });
+    }
+
+    function renderAll(){ renderFlights(); renderPassengers(); renderBaggage(); renderStaff(); renderMonitor(); renderActivity(); }
+
+    // Actions
+    function addFlight(f){
+      if (state.flights.find(x=>x.id===f.id)) return alert('Código de vuelo ya existe');
+      state.flights.push(f); state.alerts.push(`Nuevo vuelo registrado: ${f.id}`); saveDB(state); renderAll();
+    }
+
+    function addPassenger(p){ state.passengers.push(p); state.alerts.push(`Nuevo pasajero: ${p.name} (${p.id})`); saveDB(state); renderAll(); }
+
+    function addBaggage(b){ state.baggage.push(b); state.alerts.push(`Maleta registrada: ${b.id} para vuelo ${b.flightId}`); saveDB(state); renderAll(); }
+
+    function toggleCheckIn(pid){
+      state.passengers = state.passengers.map(p=> p.id===pid ? {...p, checkedIn: !p.checkedIn} : p); saveDB(state); renderAll();
+    }
+
+    function updateStaff(newStaff){ state.staff = newStaff; saveDB(state); renderAll(); }
+
+    function clearAlerts(){ state.alerts = []; saveDB(state); renderAll(); }
+
+    function exportJSON(){ const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state, null, 2)); const a = document.createElement('a'); a.href = dataStr; a.download = 'sgia_sim_db_export.json'; a.click(); }
+
+    function importJSON(file){ const reader = new FileReader(); reader.onload = (e)=>{ try{ const json = JSON.parse(e.target.result); state = json; saveDB(state); renderAll(); alert('Importado con éxito'); } catch(err){ alert('Archivo inválido'); }}; reader.readAsText(file); }
+
+    // DOM events
+    document.addEventListener('DOMContentLoaded', ()=>{
+      // Flight form
+      el('flight-form').addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const id = el('flight-id').value.trim();
+        const airline = el('flight-airline').value.trim();
+        const origin = el('flight-origin').value.trim() || 'BOG';
+        const dest = el('flight-dest').value.trim();
+        const time = el('flight-time').value;
+        const seats = Number(el('flight-seats').value) || 100;
+        const gate = el('flight-gate').value.trim() || 'A1';
+        if(!id || !airline || !dest || !time) return alert('Completa campos obligatorios');
+        addFlight({ id, airline, origin, dest, time, seats, gate });
+        el('flight-id').value=''; el('flight-airline').value=''; el('flight-dest').value=''; el('flight-time').value=''; el('flight-seats').value='100'; el('flight-gate').value='A1';
+      });
+
+      // Passenger form
+      el('passenger-form').addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const name = el('pax-name').value.trim();
+        const flightId = el('pax-flight').value;
+        const seat = el('pax-seat').value.trim();
+        if(!name || !flightId) return alert('Completa nombre y vuelo');
+        const id = uid('PAX');
+        addPassenger({ id, name, flightId, seat, checkedIn:false });
+        el('pax-name').value=''; el('pax-seat').value='';
+      });
+
+      // Baggage form
+      el('baggage-form').addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const ownerId = el('baggage-owner').value; if(!ownerId) return alert('Selecciona pasajero');
+        const weight = Number(el('baggage-weight').value) || 0;
+        const owner = state.passengers.find(p=>p.id===ownerId); if(!owner) return alert('Pasajero no encontrado');
+        const id = uid('BAG');
+        addBaggage({ id, passengerId: ownerId, flightId: owner.flightId, weight, status: 'Checked-In' });
+        el('baggage-weight').value='15';
+      });
+
+      // Staff add
+      el('staff-add').addEventListener('click', ()=>{
+        const name = el('staff-name').value.trim(); const role = el('staff-role').value.trim() || 'Técnico'; const shift = el('staff-shift').value.trim() || '08:00-14:00';
+        if(!name) return alert('Nombre requerido');
+        const id = uid('ST'); state.staff.push({ id, name, role, shift }); saveDB(state); renderAll(); el('staff-name').value='';
+      });
+
+      // Clear alerts
+      el('clear-alerts').addEventListener('click', ()=>{ clearAlerts(); });
+
+      // Export/import
+      el('export-db').addEventListener('click', ()=>{ exportJSON(); });
+      el('import-db').addEventListener('change', (e)=>{ const file = e.target.files[0]; if(file) importJSON(file); });
+
+      renderAll();
+    });
+
+  })();
+  </script>
+</body>
+</html>
